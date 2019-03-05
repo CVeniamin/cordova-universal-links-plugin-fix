@@ -28,24 +28,30 @@
     [self localInit];
     // Can be used for testing.
     // Just uncomment, close the app and reopen it. That will simulate application launch from the link.
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
 }
 
-//- (void)onResume:(NSNotification *)notification {
-//    NSUserActivity *activity = [[NSUserActivity alloc] initWithActivityType:NSUserActivityTypeBrowsingWeb];
-//    [activity setWebpageURL:[NSURL URLWithString:@"http://site2.com/news/page?q=1&v=2#myhash"]];
-//    
-//    [self handleUserActivity:activity];
-//}
+- (void)onResume:(NSNotification *)notification {
+    NSUserActivity *activity = [[NSUserActivity alloc] initWithActivityType:NSUserActivityTypeBrowsingWeb];
+    [activity setWebpageURL:[NSURL URLWithString:@"http://site2.com/news/page?q=1&v=2#myhash"]];
+    
+    [self handleUserActivity:activity];
+}
 
 - (void)handleOpenURL:(NSNotification*)notification {
+
     id url = notification.object;
+    NSLog(@"[CULPlugin] started handleOpenUrl %@ ", url);
     if (![url isKindOfClass:[NSURL class]]) {
+        NSLog(@"[CULPlugin] returned early");
         return;
     }
-    
+
+    NSLog(@"[CULPlugin] on handleOpenUrls %@ ", url);
+
     CULHost *host = [self findHostByURL:url];
     if (host) {
+        NSLog(@"[CULPlugin] isHost %@", );
         [self storeEventWithHost:host originalURL:url];
     }
 }
@@ -53,9 +59,11 @@
 - (BOOL)handleUserActivity:(NSUserActivity *)userActivity {
     [self localInit];
     
+    
     NSURL *launchURL = userActivity.webpageURL;
     CULHost *host = [self findHostByURL:launchURL];
     if (host == nil) {
+        NSLog(@"[CULPlugin] handleUserActivity returned NO ");
         return NO;
     }
     
@@ -89,6 +97,7 @@
 - (NSArray<CULHost *> *)getSupportedHostsFromPreferences {
     NSString *jsonConfigPath = [[NSBundle mainBundle] pathForResource:@"ul" ofType:@"json" inDirectory:@"www"];
     if (jsonConfigPath) {
+        NSLog(@"[CULPlugin] getSupportedHostsFromPreferences returns on jsonConfigPath");
         return [CULConfigJsonParser parseConfig:jsonConfigPath];
     }
     
@@ -103,6 +112,7 @@
  *  @param originalUrl launch url
  */
 - (void)storeEventWithHost:(CULHost *)host originalURL:(NSURL *)originalUrl {
+    NSLog(@"[CULPlugin] storeEventWithHost got %@", originalUrl);
     _storedEvent = [CDVPluginResult resultWithHost:host originalURL:originalUrl];
     [self tryToConsumeEvent];
 }
@@ -117,8 +127,10 @@
     NSURLComponents *urlComponents = [NSURLComponents componentsWithURL:launchURL resolvingAgainstBaseURL:YES];
     CULHost *host = nil;
     for (CULHost *supportedHost in _supportedHosts) {
+        NSLog(@"[CULPlugin] findHostByURL got %@", supportedHost.name);
         NSPredicate *pred = [NSPredicate predicateWithFormat:@"self LIKE[c] %@", supportedHost.name];
         if ([pred evaluateWithObject:urlComponents.host]) {
+            NSLog(@"[CULPlugin] host is supported ");
             host = supportedHost;
             break;
         }
@@ -136,12 +148,15 @@
  */
 - (void)tryToConsumeEvent {
     if (_subscribers.count == 0 || _storedEvent == nil) {
+        NSLog(@"[CULPlugin] tryToConsumeEvent returned early");
         return;
     }
     
     NSString *storedEventName = [_storedEvent eventName];
     for (NSString *eventName in _subscribers) {
+        NSLog(@"[CULPlugin] iterating over eventName %@", eventName);
         if ([storedEventName isEqualToString:eventName]) {
+            NSLog(@"[CULPlugin] eventName isEqualToString ");
             NSString *callbackID = _subscribers[eventName];
             [self.commandDelegate sendPluginResult:_storedEvent callbackId:callbackID];
             _storedEvent = nil;
@@ -154,7 +169,11 @@
 
 - (void)jsSubscribeForEvent:(CDVInvokedUrlCommand *)command {
     NSString *eventName = [command eventName];
+    
+    NSLog(@"[CULPlugin] jsSubscribeForEvent subscribed eventName %@", eventName);
+
     if (eventName.length == 0) {
+        NSLog(@"[CULPlugin] jsSubscribeForEvent returned early");
         return;
     }
     
@@ -164,7 +183,9 @@
 
 - (void)jsUnsubscribeFromEvent:(CDVInvokedUrlCommand *)command {
     NSString *eventName = [command eventName];
+    NSLog(@"[CULPlugin] jsUnsubscribeFromEvent eventName %@", eventName);
     if (eventName.length == 0) {
+        NSLog(@"[CULPlugin] jsUnsubscribeFromEvent returned early");
         return;
     }
     
