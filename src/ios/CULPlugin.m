@@ -51,7 +51,7 @@
 
     CULHost *host = [self findHostByURL:url];
     if (host) {
-        NSLog(@"[CULPlugin] isHost %@", );
+        NSLog(@"[CULPlugin] isHost %@", url);
         [self storeEventWithHost:host originalURL:url];
     }
 }
@@ -112,7 +112,7 @@
  *  @param originalUrl launch url
  */
 - (void)storeEventWithHost:(CULHost *)host originalURL:(NSURL *)originalUrl {
-    NSLog(@"[CULPlugin] storeEventWithHost got %@", originalUrl);
+    NSLog(@"[CULPlugin] storeEventWithHost got %@", originalUrl.absoluteString);
     _storedEvent = [CDVPluginResult resultWithHost:host originalURL:originalUrl];
     [self tryToConsumeEvent];
 }
