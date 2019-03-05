@@ -28,15 +28,15 @@
     [self localInit];
     // Can be used for testing.
     // Just uncomment, close the app and reopen it. That will simulate application launch from the link.
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
 }
 
-- (void)onResume:(NSNotification *)notification {
-    NSUserActivity *activity = [[NSUserActivity alloc] initWithActivityType:NSUserActivityTypeBrowsingWeb];
-    [activity setWebpageURL:[NSURL URLWithString:@"http://site2.com/news/page?q=1&v=2#myhash"]];
+//- (void)onResume:(NSNotification *)notification {
+//    NSUserActivity *activity = [[NSUserActivity alloc] initWithActivityType:NSUserActivityTypeBrowsingWeb];
+//    [activity setWebpageURL:[NSURL URLWithString:@"http://site2.com/news/page?q=1&v=2#myhash"]];
     
-    [self handleUserActivity:activity];
-}
+//    [self handleUserActivity:activity];
+//}
 
 - (void)handleOpenURL:(NSNotification*)notification {
 
@@ -124,13 +124,19 @@
  *  @return host entry; <code>nil</code> if none is found
  */
 - (CULHost *)findHostByURL:(NSURL *)launchURL {
+    NSLog(@"[CULPlugin] launchURL is %@", launchURL.absoluteString);
+
     NSURLComponents *urlComponents = [NSURLComponents componentsWithURL:launchURL resolvingAgainstBaseURL:YES];
+    NSLog(@"[CULPlugin] launchURL host name is %@", urlComponents.host);
+
     CULHost *host = nil;
     for (CULHost *supportedHost in _supportedHosts) {
         NSLog(@"[CULPlugin] findHostByURL got %@", supportedHost.name);
+
         NSPredicate *pred = [NSPredicate predicateWithFormat:@"self LIKE[c] %@", supportedHost.name];
         if ([pred evaluateWithObject:urlComponents.host]) {
             NSLog(@"[CULPlugin] host is supported ");
+
             host = supportedHost;
             break;
         }
@@ -153,6 +159,7 @@
     }
     
     NSString *storedEventName = [_storedEvent eventName];
+    NSLog(@"[CULPlugin] storedEventName is %@", storedEventName);
     for (NSString *eventName in _subscribers) {
         NSLog(@"[CULPlugin] iterating over eventName %@", eventName);
         if ([storedEventName isEqualToString:eventName]) {
